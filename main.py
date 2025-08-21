@@ -17,7 +17,7 @@ from lib.load_student_model import load_student
 from lib.set_dashboard import set_dashboard
 from lib.teacher_CNN import teacher_CNN
 from lib.to_rgb import get_rgb_images
-from utils.make_malmem_balanced import make_malmem_balanced
+# from utils.make_malmem_balanced import make_malmem_balanced
 from vit_main import vit_fit
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'

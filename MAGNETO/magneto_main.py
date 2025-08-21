@@ -11,11 +11,11 @@ from MAGNETO.lib import VecToImage
 
 
 def magneto_main(config, dataset_param, toBinary, toBinaryMap):
-    with open(dataset_param["tabular_dataset_path"] + dataset_param["tabular_trainfile"], 'r') as file:
+    with open(dataset_param["tabular_dataset_path"] + "\\" + dataset_param["tabular_trainfile"], 'r') as file:
         data = {"Xtrain": pd.DataFrame(list(csv.DictReader(file))), "class": dataset_param["classes"]}
         data["Classification"] = data["Xtrain"][dataset_param["classification"]]
         del data["Xtrain"][dataset_param["classification"]]
-    with open(dataset_param["tabular_dataset_path"] + dataset_param["tabular_testfile"], 'r') as file:
+    with open(dataset_param["tabular_dataset_path"] + "\\" + dataset_param["tabular_testfile"], 'r') as file:
         Xtest = pd.DataFrame(list(csv.DictReader(file)))
         Xtest.replace("", np.nan, inplace=True)
         Xtest.dropna(inplace=True)

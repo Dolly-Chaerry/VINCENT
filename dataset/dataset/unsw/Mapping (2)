@@ -1,0 +1,7 @@
+Multiclasse
+Normal=0, Reconnaissance=7, DoS=3, Exploits=4, Fuzzers=5, Shellcode=8, Analysis=1,
+                    Backdoor=2, Generic=6, Worms=9
+                    
+Binario
+Normal=1
+Attack=0

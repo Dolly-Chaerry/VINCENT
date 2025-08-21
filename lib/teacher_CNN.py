@@ -2,7 +2,7 @@ from keras import Model
 from keras.layers import *
 from tensorflow import expand_dims
 from tensorflow import reduce_mean
-from visual_attention import PixelAttention2D
+from lib.custom_pixel_attention import PixelAttention2D
 
 
 def teacher_CNN( input_shape, num_classes, hyperparameters):
