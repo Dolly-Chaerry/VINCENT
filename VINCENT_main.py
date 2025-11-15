@@ -96,6 +96,7 @@ def hyperopt_loop(param):
 
     callbacks = dashboard
     if config.getboolean("DISTILLATION", "EarlyStop"):
+        print("Early stop in HyperOpt")
         stop_callback = tf.keras.callbacks.EarlyStopping(monitor='student_loss', min_delta=0.0001,
                                                          patience=config.getint("DISTILLATION", "Patience"),
                                                          restore_best_weights=True, verbose=2)
@@ -185,10 +186,10 @@ def VINCENT_fit(config_g, teacher_g, x_with_h_g, y_train_g, x_with_h_val_g, y_va
     trials = Trials()
     optimizable_variable = {
         "kernel": hp.choice("kernel", np.arange(2, 3 + 1)),
-        "batch": hp.choice("batch", [64, 128, 256]), #, 512
+        "batch": hp.choice("batch", [64, 128, 256, 512]), #, 512
         'dropout1': hp.uniform("dropout1", 0, 1),
         'dropout2': hp.uniform("dropout2", 0, 1),
-        "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-1),
+        "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-3),
         "T": hp.choice("T", [2, 3, 4, 5, 6, 7, 8, 9, 10]),
         "A": hp.uniform("A", 0, 1)
     }
