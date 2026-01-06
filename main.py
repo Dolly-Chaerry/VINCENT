@@ -1,6 +1,7 @@
 import configparser
 import json
 import os
+import sys
 from csv import DictReader
 
 import numpy as np
@@ -21,6 +22,9 @@ from lib.to_rgb import get_rgb_images
 from vit_main import vit_fit
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+
 import tensorflow as tf
 from tensorflow.compat.v1 import InteractiveSession
 from MAGNETO.magneto_main import magneto_main
@@ -28,8 +32,28 @@ import matplotlib.pyplot as plt
 from sklearn.utils.random import sample_without_replacement
 
 config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 session = InteractiveSession(config=config)
+
+# gpus = tf.config.list_physical_devices('GPU')
+# if gpus: 
+#     for gpu in gpus:
+#         tf.config.experimental.set_memory_growth(gpu, True)
+#         print("Memory Growth Enabled")
+# else:
+#     print("No GPU detected")
+
+# try:
+#     # Disable all GPUS
+#     tf.config.set_visible_devices([], 'GPU')
+#     visible_devices = tf.config.get_visible_devices()
+#     for device in visible_devices:
+#         assert device.device_type != 'GPU'
+# except:
+#     # Invalid device or cannot modify virtual devices once initialized.
+#     pass
+
+# print(tf.config.list_physical_devices('GPU'))  # should be []
+# sys.exit()
 
 
 def main():
@@ -38,8 +62,7 @@ def main():
     # SET ENVIRONMENTAL PARAMETERS
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     tf.compat.v1.set_random_seed(config["SETTINGS"]["Seed"])
-    os.environ['TF_DETERMINISTIC_OPS'] = '1'
-    os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.threading.set_intra_op_parallelism_threads(1)
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
