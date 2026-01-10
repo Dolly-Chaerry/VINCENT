@@ -273,20 +273,20 @@ def main():
                             "batch": hp.choice("batch", [64, 128, 256, 512]),
                             'dropout1': hp.uniform("dropout1", 0, 1),
                             'dropout2': hp.uniform("dropout2", 0, 1),
-                            "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-1),
+                            "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-3),
                             "T": hp.choice("T", [2, 3, 4, 5, 6, 7, 8, 9, 10]),
                             "A": hp.uniform("A", 0, 1),
                             "epoch": 30}
-    if config["SETTINGS"]["Dataset"] == "NSL":
-        optimizable_variable = {"kernel": hp.choice("kernel", [2]),
-                                "filter": hp.choice("filter", [64]),
-                                "filter2": hp.choice("filter2", [64]),
-                                "batch": hp.choice("batch", [512]),
-                                'dropout1': hp.choice("dropout1", [0.1433322097359599]),
-                                'dropout2': hp.choice("dropout2", [0.16551147168904612]),
-                                "learning_rate": hp.choice("learning_rate",[0.06345965575278556]),
-                                "T": hp.choice("T", [3]),
-                                "A": hp.choice("A", [0.5653684610299501])}
+    # if config["SETTINGS"]["Dataset"] == "NSL":
+    #     optimizable_variable = {"kernel": hp.choice("kernel", [2]),
+    #                             "filter": hp.choice("filter", [64]),
+    #                             "filter2": hp.choice("filter2", [64]),
+    #                             "batch": hp.choice("batch", [512]),
+    #                             'dropout1': hp.choice("dropout1", [0.1433322097359599]),
+    #                             'dropout2': hp.choice("dropout2", [0.16551147168904612]),
+    #                             "learning_rate": hp.choice("learning_rate",[0.06345965575278556]),
+    #                             "T": hp.choice("T", [3]),
+    #                             "A": hp.choice("A", [0.5653684610299501])}
 
     fmin(hyperopt_loop, optimizable_variable, trials=trials, algo=tpe.suggest, max_evals=40)
 

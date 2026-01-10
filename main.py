@@ -1,6 +1,7 @@
 import configparser
 import json
 import os
+import sys
 from csv import DictReader
 
 import numpy as np
@@ -21,6 +22,9 @@ from lib.to_rgb import get_rgb_images
 from vit_main import vit_fit
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+
 import tensorflow as tf
 from tensorflow.compat.v1 import InteractiveSession
 from MAGNETO.magneto_main import magneto_main
@@ -28,9 +32,16 @@ import matplotlib.pyplot as plt
 from sklearn.utils.random import sample_without_replacement
 
 config = tf.compat.v1.ConfigProto()
-config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 session = InteractiveSession(config=config)
 
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+        print("Memory Growth Enabled")
+else:
+    print("No GPU detected")
+    sys.exit
 
 def main():
     config = configparser.ConfigParser()
@@ -38,8 +49,7 @@ def main():
     # SET ENVIRONMENTAL PARAMETERS
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     tf.compat.v1.set_random_seed(config["SETTINGS"]["Seed"])
-    os.environ['TF_DETERMINISTIC_OPS'] = '1'
-    os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+    
     tf.config.threading.set_inter_op_parallelism_threads(1)
     tf.config.threading.set_intra_op_parallelism_threads(1)
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
@@ -99,9 +109,9 @@ def main():
             else:
                 dashboard = []
                 wandb = None
-            teacher, history = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
-            scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
-                                                    config, wandb)
+            teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
+            # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
+            #                                         config, wandb)
             print(scores)
             cr_teacher = classification_report(y_test, res_test)
             print(cr_teacher)
@@ -152,6 +162,12 @@ def main():
     print(cr_student)
     print("-----")
 
+    print(f"DATASET: {config['SETTINGS']['Dataset']}")
+    print(f"UPDATED PARAMETERS IN VINCENT_MAIN AS OF NOV 17")
+    print(f"UPDATED PARAMETERS IN DISTILLATION_TRAIN AS OF JAN 5")
+    print(f"UPDATED PARAMETERS IN CNN_ATTENTION_MAIN AS OF JAN 9")
+    print(f"SEED = {config['SETTINGS']['Seed']}")
+    print(f"PATCH SIZE: {config['VIT_SETTINGS']['PatchSize']}")
 
 if __name__ == '__main__':
     main()
