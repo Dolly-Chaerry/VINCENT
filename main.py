@@ -175,6 +175,7 @@ def main():
     print(f"UPDATED PARAMETERS IN CNN_ATTENTION_MAIN AS OF JAN 9")
     print(f"SEED = {config['SETTINGS']['Seed']}")
     print(f"PATCH SIZE: {config['VIT_SETTINGS']['PatchSize']}")
+    print(f"CNN ATTENTION: {config['SETTINGS']['UseCNNAttention']}")
 
 if __name__ == '__main__':
     main()
