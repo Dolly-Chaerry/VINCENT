@@ -34,27 +34,14 @@ from sklearn.utils.random import sample_without_replacement
 config = tf.compat.v1.ConfigProto()
 session = InteractiveSession(config=config)
 
-# gpus = tf.config.list_physical_devices('GPU')
-# if gpus: 
-#     for gpu in gpus:
-#         tf.config.experimental.set_memory_growth(gpu, True)
-#         print("Memory Growth Enabled")
-# else:
-#     print("No GPU detected")
-
-# try:
-#     # Disable all GPUS
-#     tf.config.set_visible_devices([], 'GPU')
-#     visible_devices = tf.config.get_visible_devices()
-#     for device in visible_devices:
-#         assert device.device_type != 'GPU'
-# except:
-#     # Invalid device or cannot modify virtual devices once initialized.
-#     pass
-
-# print(tf.config.list_physical_devices('GPU'))  # should be []
-# sys.exit()
-
+gpus = tf.config.list_physical_devices('GPU')
+if gpus: 
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+        print("Memory Growth Enabled")
+else:
+    print("No GPU detected")
+    sys.exit()
 
 def main():
     config = configparser.ConfigParser()
@@ -122,9 +109,9 @@ def main():
             else:
                 dashboard = []
                 wandb = None
-            teacher, history = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
-            scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
-                                                    config, wandb)
+            teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
+            # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
+            #                                         config, wandb)
             print(scores)
             cr_teacher = classification_report(y_test, res_test)
             print(cr_teacher)
@@ -175,6 +162,12 @@ def main():
     print(cr_student)
     print("-----")
 
+    print(f"DATASET: {config['SETTINGS']['Dataset']}")
+    print(f"UPDATED PARAMATERS IN VINCENT_MAIN AS OF NOV 17")
+    print(f"UPDATED PARAMATERS IN DISTILLATION_MAIN AS OF JAN 5")
+    print(f"UPDATED PARAMATERS IN CNN_ATTENTION_MAIN AS OF JAN 9")
+    print(f"SEED = {config['SETTINGS']['Seed']}")
+    print(f"PATCH SIZE: {config['VIT_SETTINGS']['PatchSize']}")
 
 if __name__ == '__main__':
     main()
