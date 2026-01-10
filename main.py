@@ -2,6 +2,7 @@ import configparser
 import json
 import os
 import sys
+import sys
 from csv import DictReader
 
 import numpy as np
@@ -22,6 +23,9 @@ from lib.to_rgb import get_rgb_images
 from vit_main import vit_fit
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_DETERMINISTIC_OPS'] = '1'
+os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
+
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
@@ -109,6 +113,9 @@ def main():
             else:
                 dashboard = []
                 wandb = None
+            teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
+            # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
+            #                                         config, wandb)
             teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
             # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
             #                                         config, wandb)
