@@ -30,9 +30,11 @@ i = -1
 
 best_model = None
 best_score = None
+cnn_res_test = None
 
 
 def hyperopt_loop_cnn_attention(param):
+    global best_model, best_score, cnn_res_test
     global x_train, y_train, x_val, y_val, x_test, y_test, i, config
     i = i + 1
     one_hot_encode_y_train = to_categorical(y_train, num_classes=len(set(y_train)))
@@ -68,7 +70,7 @@ def hyperopt_loop_cnn_attention(param):
     print("end")
     # distiller.evaluate(x_with_h, y_test)
     if len(set(y_train)) != 2:
-        scores, y_pred = check_score_and_save(history, model, x_train, y_train, x_val, y_val, x_test, y_test,
+        scores, cnn_res_test = check_score_and_save(history, model, x_train, y_train, x_val, y_val, x_test, y_test,
                                               config, save=False, distillation=False, dashboard=wandb,
                                               time=datetime.now() - start)
     else:
@@ -87,10 +89,14 @@ def hyperopt_loop_cnn_attention(param):
         best_loss = score_list[-1]["val_loss"]
         model.save_weights(
             config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "/cnnAttention" + str(date) + "/best.tf")
+        best_model = model
+        best_score = scores
     elif score_list[-1]["val_loss"] < best_loss:
         best_loss = score_list[-1]["val_loss"]
         model.save_weights(
             config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "/cnnAttention" + str(date) + "/best.tf")
+        best_model = model
+        best_score = scores
     p = pd.DataFrame(score_list)
     p.to_excel(
         config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "/cnnAttention" + str(date) + "/" + str(date) + ".xlsx")
@@ -120,13 +126,13 @@ def cnn_attention_main(config2, x_train2, y_train2, x_val2, y_val2, x_test2, y_t
         "batch": hp.choice("batch", [64, 128, 256, 512]),
         'dropout1': hp.uniform("dropout1", 0, 1),
         'dropout2': hp.uniform("dropout2", 0, 1),
-        "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-1),
+        "learning_rate": hp.uniform("learning_rate", 1e-4, 1e-3),
     }
 
     fmin(hyperopt_loop_cnn_attention, optimizable_variable, trials=trials, algo=tpe.suggest,
          max_evals=config.getint("DISTILLATION", "HyperoptEvaluations"))
 
-    return best_model, best_score
+    return best_model, best_score, cnn_res_test
 
     # model, history = fit(model, config, x_train, y_train, x_val, y_val, dashboard)
     # end = datetime.now()
