@@ -26,9 +26,6 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_DETERMINISTIC_OPS'] = '1'
 os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
 
-os.environ['TF_DETERMINISTIC_OPS'] = '1'
-os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
-
 import tensorflow as tf
 from tensorflow.compat.v1 import InteractiveSession
 from MAGNETO.magneto_main import magneto_main
@@ -45,7 +42,7 @@ if gpus:
         print("Memory Growth Enabled")
 else:
     print("No GPU detected")
-    sys.exit
+    sys.exit()
 
 def main():
     config = configparser.ConfigParser()
@@ -101,7 +98,8 @@ def main():
             print(scores)
             cr_teacher = classification_report(y_test, res_test)
             print(cr_teacher)
-
+            #sys.exit()
+            
         else:
             path = dataset_param["VIT_Teacher_Path"]
             teacher = tf.keras.models.load_model(path, compile=False)  # vit
@@ -113,9 +111,6 @@ def main():
             else:
                 dashboard = []
                 wandb = None
-            teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
-            # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
-            #                                         config, wandb)
             teacher, scores, res_test = cnn_attention_main(config, x_train, y_train, x_val, y_val, x_test, y_test)
             # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
             #                                         config, wandb)
@@ -169,12 +164,14 @@ def main():
     print(cr_student)
     print("-----")
 
-    print(f"DATASET: {config['SETTINGS']['Dataset']}")
     print(f"UPDATED PARAMETERS IN VINCENT_MAIN AS OF NOV 17")
     print(f"UPDATED PARAMETERS IN DISTILLATION_TRAIN AS OF JAN 5")
     print(f"UPDATED PARAMETERS IN CNN_ATTENTION_MAIN AS OF JAN 9")
+    print(f"DATASET: {config['SETTINGS']['Dataset']}")
     print(f"SEED = {config['SETTINGS']['Seed']}")
     print(f"PATCH SIZE: {config['VIT_SETTINGS']['PatchSize']}")
+    print(f"MaxASize: {config['MAGNETO']['MaxASize']}")
+    print(f"MaxBSize: {config['MAGNETO']['MaxBSize']}")
     print(f"CNN ATTENTION: {config['SETTINGS']['UseCNNAttention']}")
 
 if __name__ == '__main__':
