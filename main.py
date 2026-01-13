@@ -2,7 +2,6 @@ import configparser
 import json
 import os
 import sys
-import sys
 from csv import DictReader
 
 import numpy as np
@@ -35,14 +34,7 @@ from sklearn.utils.random import sample_without_replacement
 config = tf.compat.v1.ConfigProto()
 session = InteractiveSession(config=config)
 
-gpus = tf.config.list_physical_devices('GPU')
-if gpus:
-    for gpu in gpus:
-        tf.config.experimental.set_memory_growth(gpu, True)
-        print("Memory Growth Enabled")
-else:
-    print("No GPU detected")
-    sys.exit()
+    
 
 def main():
     config = configparser.ConfigParser()
@@ -80,7 +72,12 @@ def main():
         print("[+]RGB encoding")
         shape = x_train.shape[1:3]
         x_train = get_rgb_images(x_train, shape)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train)
+        # mikachu = x_train[0].astype(np.uint8)
+        # plt.imsave("mikachu.png", mikachu)
+        # sys.exit()
         x_test = get_rgb_images(x_test, shape)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test)
 
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, stratify=y_train, test_size=0.2,
                                                       random_state=config.getint("SETTINGS", "Seed"))
@@ -132,8 +129,11 @@ def main():
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         im = create_heatmap(teacher, x_train, 10)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM.npz", patches=im)
         im_val = create_heatmap(teacher, x_val, 5)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_VAL.npz", patches=im_val)
         im_test = create_heatmap(teacher, x_test, 10)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TEST.npz", patches=im_test)
     else:
         im, nat1 = create_heatmap_CNN(teacher, x_train, 1)
         im_val, nat2 = create_heatmap_CNN(teacher, x_val, 1)
