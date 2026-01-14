@@ -72,15 +72,21 @@ def main():
         print("[+]RGB encoding")
         shape = x_train.shape[1:3]
         x_train = get_rgb_images(x_train, shape)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train)
+        
         # mikachu = x_train[0].astype(np.uint8)
         # plt.imsave("mikachu.png", mikachu)
         # sys.exit()
         x_test = get_rgb_images(x_test, shape)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test)
+        
 
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, stratify=y_train, test_size=0.2,
                                                       random_state=config.getint("SETTINGS", "Seed"))
+    print(x_train.shape)
+    print(x_test.shape)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test)
+    sys.exit()
+
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         if config.getboolean("SETTINGS", "TrainVIT"):
             # TRAIN VIT
@@ -129,7 +135,7 @@ def main():
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         im = create_heatmap(teacher, x_train, 10)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM.npz", patches=im)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TRAIN.npz", patches=im)
         im_val = create_heatmap(teacher, x_val, 5)
         np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_VAL.npz", patches=im_val)
         im_test = create_heatmap(teacher, x_test, 10)
