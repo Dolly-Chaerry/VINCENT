@@ -89,8 +89,8 @@ def main():
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, stratify=y_train, test_size=0.2,
                                                       random_state=config.getint("SETTINGS", "Seed"))
     
-    # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train, labels=y_train)
-    # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test, labels=y_test)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train, labels=y_train)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test, labels=y_test)
     #sys.exit()
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
@@ -141,11 +141,9 @@ def main():
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         im = create_heatmap(teacher, x_train, 10)
-        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TRAIN.npz", patches=im)
         im_val = create_heatmap(teacher, x_val, 5)
-        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_VAL.npz", patches=im_val)
         im_test = create_heatmap(teacher, x_test, 10)
-        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TEST.npz", patches=im_test)
+        #sys.exit()
     else:
         im, nat1 = create_heatmap_CNN(teacher, x_train, 1)
         im_val, nat2 = create_heatmap_CNN(teacher, x_val, 1)
@@ -155,6 +153,10 @@ def main():
     x_with_h = create_ds_with_heatmap(x_train, im)
     x_with_h_val = create_ds_with_heatmap(x_val, im_val)
     x_with_h_test = create_ds_with_heatmap(x_test, im_test)
+
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TRAIN.npz", patches=x_with_h)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TEST.npz", patches=x_with_h_test)
+    sys.exit()
 
     if config.getboolean("SETTINGS", "TrainVINCENT"):
         distiller, score = VINCENT_fit(config, teacher, x_with_h, y_train, x_with_h_val, y_val, x_with_h_test, y_test)
