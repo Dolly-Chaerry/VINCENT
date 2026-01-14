@@ -34,8 +34,15 @@ from sklearn.utils.random import sample_without_replacement
 config = tf.compat.v1.ConfigProto()
 session = InteractiveSession(config=config)
 
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+        print("Memory Growth Enabled")
+else:
+    print("No GPU detected")
+    sys.exit()
     
-
 def main():
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -43,8 +50,8 @@ def main():
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     tf.compat.v1.set_random_seed(config["SETTINGS"]["Seed"])
     
-    tf.config.threading.set_inter_op_parallelism_threads(14)
-    tf.config.threading.set_intra_op_parallelism_threads(14)
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    tf.config.threading.set_intra_op_parallelism_threads(1)
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     np.random.seed(int(config["SETTINGS"]["Seed"]))
     # rn.seed(1254)
@@ -82,9 +89,9 @@ def main():
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, stratify=y_train, test_size=0.2,
                                                       random_state=config.getint("SETTINGS", "Seed"))
     
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train, labels=y_train)
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test, labels=y_test)
-    sys.exit()
+    # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train, labels=y_train)
+    # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test, labels=y_test)
+    #sys.exit()
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         if config.getboolean("SETTINGS", "TrainVIT"):
@@ -134,11 +141,11 @@ def main():
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
         im = create_heatmap(teacher, x_train, 10)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TRAIN.npz", patches=im)
+        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TRAIN.npz", patches=im)
         im_val = create_heatmap(teacher, x_val, 5)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_VAL.npz", patches=im_val)
+        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_VAL.npz", patches=im_val)
         im_test = create_heatmap(teacher, x_test, 10)
-        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TEST.npz", patches=im_test)
+        # np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "IM_TEST.npz", patches=im_test)
     else:
         im, nat1 = create_heatmap_CNN(teacher, x_train, 1)
         im_val, nat2 = create_heatmap_CNN(teacher, x_val, 1)
