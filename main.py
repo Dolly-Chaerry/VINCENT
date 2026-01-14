@@ -43,8 +43,8 @@ def main():
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     tf.compat.v1.set_random_seed(config["SETTINGS"]["Seed"])
     
-    tf.config.threading.set_inter_op_parallelism_threads(1)
-    tf.config.threading.set_intra_op_parallelism_threads(1)
+    tf.config.threading.set_inter_op_parallelism_threads(14)
+    tf.config.threading.set_intra_op_parallelism_threads(14)
     os.environ['PYTHONHASHSEED'] = config["SETTINGS"]["Seed"]
     np.random.seed(int(config["SETTINGS"]["Seed"]))
     # rn.seed(1254)
@@ -81,10 +81,9 @@ def main():
 
     x_train, x_val, y_train, y_val = train_test_split(x_train, y_train, stratify=y_train, test_size=0.2,
                                                       random_state=config.getint("SETTINGS", "Seed"))
-    print(x_train.shape)
-    print(x_test.shape)
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train)
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test)
+    
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TRAIN.npz", patches=x_train, labels=y_train)
+    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "RGB_TEST.npz", patches=x_test, labels=y_test)
     sys.exit()
 
     if not config.getboolean("SETTINGS", "UseCNNAttention"):
