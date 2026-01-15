@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
-dataset = "nsl"
+dataset = "maldroid"  #configure this
 
 rgb_train = np.load(f"./res/{dataset}/RGB_TRAIN.npz")["patches"]
 rgb_test = np.load(f"./res/{dataset}/RGB_TEST.npz")["patches"]
@@ -24,10 +25,9 @@ print("RGB_TEST:", rgb_test.shape, rgb_test.dtype)
 sig_orig = {}
 sig_att = {}
 
-for c in np.unique(y_test):    #list of all images per class c
-    sig_att[c] = att_test[y_test == c].mean(axis=0)  # already (12,12,3)
+for c in np.unique(y_test):    
+    sig_att[c] = att_test[y_test == c].mean(axis=0)
     sig_orig[c] = rgb_test[y_test == c].mean(axis=0)
-    plt.imsave(f"visualSig_{c}.png", sig_att[c].astype(np.uint8))
 
 if dataset == "maldroid":
     classes = ["Benign", "Adware", "Banking", "SMS", "Ransomware"]
@@ -38,12 +38,12 @@ n = len(classes)
 fig, axes = plt.subplots(1, n, figsize=(4*n, 4))
 
 for ax, c, label in zip(axes, sig_att.keys(), classes):
-    im = ax.imshow(sig_att[c].astype(np.uint8))
-    ax.set_title(f"{label}")
+    bar = ax.imshow(sig_att[c].astype(np.uint8))
+    ax.set_title(label)
     ax.axis("off")
 
-fig.colorbar(im, ax=axes, fraction=0.02)
-plt.savefig("attention-signatures.png", bbox_inches="tight")
+fig.colorbar(bar, ax=axes, fraction=0.02)
+plt.savefig("attention-signatures-test.png", bbox_inches="tight")
 
 def avg_inertia(X, mu):
     diffs = X - mu
@@ -60,42 +60,36 @@ for c in np.unique(y_test):
 print(inertia_orig)
 print(inertia_att)
 
-
 avg_distance_maps = {}
 
 for c, mu_c in sig_att.items():
-    distance_sum = np.zeros(mu_c.shape[:2])  # (H, W)
+    distance_sum = np.zeros(mu_c.shape[:2])  
     count = 0
 
     for c2, mu_c2 in sig_att.items():
         if c2 == c:
             continue
 
-        diff = mu_c - mu_c2                   # (H, W, 3)
-        dist = np.linalg.norm(diff, axis=-1)  # (H, W)
+        diff = mu_c - mu_c2                  
+        dist = np.linalg.norm(diff, axis=-1)  
 
         distance_sum += dist
         count += 1
 
     avg_distance_maps[c] = distance_sum / count
 
-all_maps = np.stack(list(avg_distance_maps.values()))  # (C, H, W)
+all_maps = np.stack(list(avg_distance_maps.values()))  
 
-global_min = 0
-global_max = all_maps.max()
+fig, axes = plt.subplots(1, n, figsize=(4*n, 4))
 
-classes = list(avg_distance_maps.keys())
-C = len(classes)
+cmap = cm.plasma.copy()
+cmap.set_bad(color='white')
 
-fig, axes = plt.subplots(1, C, figsize=(4*C, 4))
-
-for ax, c in zip(axes, classes):
-    im = ax.imshow(avg_distance_maps[c],
-                   cmap="RdPu",
-                   vmin=0,
-                   vmax=global_max)
-    ax.set_title(f"Class {c}")
+for ax, c, label in zip(axes, sig_att.keys(), classes):
+    image = np.ma.masked_where(avg_distance_maps[c] == 0, avg_distance_maps[c])
+    bar = ax.imshow(image, vmax=125, cmap=cmap)
+    ax.set_title(label)
     ax.axis("off")
 
-fig.colorbar(im, ax=axes, fraction=0.02)
-plt.savefig("avg_distance_all_classes.png", bbox_inches="tight")
+fig.colorbar(bar, ax=axes, fraction=0.02)
+plt.savefig("inertia.png", bbox_inches="tight")
