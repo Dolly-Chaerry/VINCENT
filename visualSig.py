@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
-dataset = "maldroid"  #configure this
+dataset = "malmem"  #configure this
 
 rgb_train = np.load(f"./res/{dataset}/RGB_TRAIN.npz")["patches"]
 rgb_test = np.load(f"./res/{dataset}/RGB_TEST.npz")["patches"]
@@ -29,10 +29,19 @@ for c in np.unique(y_test):
     sig_att[c] = att_test[y_test == c].mean(axis=0)
     sig_orig[c] = rgb_test[y_test == c].mean(axis=0)
 
+vmax = 300 #configure this
+
 if dataset == "maldroid":
     classes = ["Benign", "Adware", "Banking", "SMS", "Ransomware"]
+    vmax = 125
 elif dataset == "nsl":
     classes = ["Benign", "DoS", "Probe", "R2L", "U2R"]
+    vmax = 275
+elif dataset == "unsw":
+    classes = ["Benign", "Analysis", "DoS", "Backdoor", "Exploits", "Fuzzers", "Generic", "Recon.", "Shellcode", "Worms"]
+else:  
+    classes = ["Benign", "Ransomware", "Spyware", "Trojan"]  
+ 
 n = len(classes)
 
 fig, axes = plt.subplots(1, n, figsize=(4*n, 4))
@@ -87,7 +96,7 @@ cmap.set_bad(color='white')
 
 for ax, c, label in zip(axes, sig_att.keys(), classes):
     image = np.ma.masked_where(avg_distance_maps[c] == 0, avg_distance_maps[c])
-    bar = ax.imshow(image, vmax=125, cmap=cmap)
+    bar = ax.imshow(image, vmax=vmax, cmap=cmap)
     ax.set_title(label)
     ax.axis("off")
 
