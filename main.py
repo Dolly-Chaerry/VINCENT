@@ -5,6 +5,7 @@ import sys
 from csv import DictReader
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 
@@ -59,6 +60,40 @@ def main():
 
     dataset_param = config[config["SETTINGS"]["Dataset"]]
 
+    def downsize_largest_to_second_largest(df, label_col, seed=42):
+        # Count samples per class (descending)
+        counts = df[label_col].value_counts()
+        if len(counts) < 2:
+            raise ValueError("Need at least 2 classes to downsize to the second largest.")
+
+        largest_class = counts.index[0]
+        target_size = counts.iloc[1]  # size of 2nd largest class
+
+        df_largest = df[df[label_col] == largest_class]
+        df_rest = df[df[label_col] != largest_class]
+
+        # Downsample only the largest class
+        df_largest_down = df_largest.sample(n=target_size, random_state=seed)
+
+        # Combine and shuffle
+        df_new = (
+            pd.concat([df_rest, df_largest_down], axis=0)
+            .sample(frac=1, random_state=seed)
+            .reset_index(drop=True)
+        )
+        return df_new, largest_class, target_size
+    
+    # train_df = pd.read_csv("dataset\\dataset\\malmem\\train_split_macro_minmaxdeleted.csv")
+    # train_df_bal, largest_class, target_size = downsize_largest_to_second_largest(
+    #     train_df, label_col="Family_int", seed=0
+    # )
+    # train_df_bal.to_csv("dataset\\dataset\\malmem\\train_split_macro_minmaxdeleted.csv", index=False)
+
+    # test_df = pd.read_csv("dataset\\dataset\\malmem\\test_split_macro_minmaxdeleted.csv")
+    # test_df_bal, largest_class, target_size = downsize_largest_to_second_largest(
+    #     test_df, label_col="Family_int", seed=0
+    # )
+    # test_df_bal.to_csv("dataset\\dataset\\malmem\\test_split_macro_minmaxdeleted.csv", index=False)
     # CONVERT TABULAR DATA TO IMAGES OR LOAD PICKLE
     if config.getboolean("SETTINGS", "UseMagnetoEncoding"):
         print("----USING MAGNETO ENCODING----")
@@ -143,7 +178,11 @@ def main():
         im = create_heatmap(teacher, x_train, 10)
         im_val = create_heatmap(teacher, x_val, 5)
         im_test = create_heatmap(teacher, x_test, 10)
-        #sys.exit()
+       
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TRAIN.npz", patches=im)
+        np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TEST.npz", patches=im_test)
+        sys.exit()
+
     else:
         im, nat1 = create_heatmap_CNN(teacher, x_train, 1)
         im_val, nat2 = create_heatmap_CNN(teacher, x_val, 1)
@@ -153,10 +192,6 @@ def main():
     x_with_h = create_ds_with_heatmap(x_train, im)
     x_with_h_val = create_ds_with_heatmap(x_val, im_val)
     x_with_h_test = create_ds_with_heatmap(x_test, im_test)
-
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TRAIN.npz", patches=x_with_h)
-    np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TEST.npz", patches=x_with_h_test)
-    sys.exit()
 
     if config.getboolean("SETTINGS", "TrainVINCENT"):
         distiller, score = VINCENT_fit(config, teacher, x_with_h, y_train, x_with_h_val, y_val, x_with_h_test, y_test)
