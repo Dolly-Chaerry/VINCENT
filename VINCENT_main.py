@@ -31,16 +31,6 @@ os.environ['HYPEROPT_FMIN_SEED'] = "0"
 
 session = InteractiveSession(config=config_tf)
 
-config = None
-teacher = None
-x_with_h = None
-y_train = None
-x_with_h_val = None
-y_val = None
-x_test = None
-y_test = None
-x_with_h_test = None
-
 score_list = []
 best_loss = None
 now = datetime.now()
@@ -68,20 +58,24 @@ def create_ds_with_heatmap(data, im):
 
 
 def hyperopt_loop(param):
+
     gc.collect()
-    print(param)
-    global teacher, config, i, best_model, best_score
-    global x_with_h, y_train, x_with_h_val, y_val, x_with_h_test, y_test
+    
+    config = param["config"]
+    teacher = param["teacher"]
+    y_train = param["y_train"]
+    y_val = param["y_val"]
+    y_test = param["y_test"]
+    x_with_h = param["x_with_h"]
+    x_with_h_val = param["x_with_h_val"]
+    x_with_h_test = param["x_with_h_test"]
+
+    global i, best_model, best_score
     i = i + 1
     shape = x_with_h.shape[2:5]
     start = datetime.now()
     student = load_student(config, shape, len(set(y_train)), param)
     student_compile(student, param)
-    if config.getboolean("SETTINGS", "Wandb"):
-        dashboard, wandb = set_dashboard_distiller(config, param, run_id=date, id=i)
-    else:
-        dashboard = []
-        wandb = None
 
     distiller = Distiller_heatmap(student=student, teacher=teacher)
 
@@ -94,7 +88,7 @@ def hyperopt_loop(param):
         temperature=param["T"],
     )
 
-    callbacks = dashboard
+    callbacks = []
     if config.getboolean("DISTILLATION", "EarlyStop"):
         print("Early stop in HyperOpt")
         stop_callback = tf.keras.callbacks.EarlyStopping(monitor='student_loss', min_delta=0.0001,
@@ -104,15 +98,8 @@ def hyperopt_loop(param):
 
     one_hot_encode_y_train = to_categorical(y_train, num_classes=len(set(y_train)))
     one_hot_encode_y_val = to_categorical(y_val, num_classes=len(set(y_test)))
-    if config.getboolean("DISTILLATION", "UseWeighedLoss"):
 
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(y_train),
-                                                          y=y_train)
-        sample_weight = np.zeros(shape=(len(y_train),))
-        for e, cl in enumerate(class_weights):
-            sample_weight[y_train == e] = cl
-
-        history = distiller.fit(
+    history = distiller.fit(
             x=x_with_h,
             y=one_hot_encode_y_train,
             batch_size=param["batch"],
@@ -120,60 +107,36 @@ def hyperopt_loop(param):
             validation_data=(x_with_h_val, one_hot_encode_y_val),
             verbose=1,
             callbacks=callbacks,
-            sample_weight=sample_weight
-        )
-    else:
-        history = distiller.fit(
-            x=x_with_h,
-            y=one_hot_encode_y_train,
-            batch_size=param["batch"],
-            epochs=config.getint("DISTILLATION", "Epochs"),
-            validation_data=(x_with_h_val, one_hot_encode_y_val),
-            verbose=1,
-            callbacks=callbacks,
-        )
-    print("end")
+    )
+
     # distiller.evaluate(x_with_h, y_test)
-    scores, res_test = check_score_and_save(history, distiller, x_with_h, y_train, x_with_h_val, y_val, x_with_h_test,
-                                            y_test,
-                                            config, save=False, distillation=True, dashboard=wandb,
-                                            time=datetime.now() - start)
+    # scores, res_test = check_score_and_save(history, distiller, x_with_h, y_train, x_with_h_val, y_val, x_with_h_test,
+    #                                         y_test,
+    #                                         config, save=False, distillation=True, dashboard=wandb,
+    #                                         time=datetime.now() - start)
 
-    scores.update(param)
+    scores = param.copy()
+    scores.update(history.history)
     score_list.append(scores)
 
-    path = config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "/distiller_" + str(date)
-
-    if not os.path.exists(path):
-        os.makedirs(path)
-    distiller.save_weights(
-        path + "/" + str(i) + ".tf")
     global best_loss
     if best_loss is None:
-        best_loss = score_list[-1]["val_student_loss"]
-        distiller.save_weights(
-            path + "/best.tf")
+        best_loss = score_list[-1]["val_student_loss"][0]
         best_model = distiller
         best_score = scores
 
-    elif score_list[-1]["val_student_loss"] < best_loss:
-        best_loss = score_list[-1]["val_student_loss"]
-        distiller.save_weights(
-            path + "/best.tf")
+    elif score_list[-1]["val_student_loss"][0] < best_loss:
+        best_loss = score_list[-1]["val_student_loss"][0]
         best_model = distiller
         best_score = scores
 
-    p = pd.DataFrame(score_list)
-    p.to_excel(
-        path + "/" + str(date) + ".xlsx")
     K.clear_session()
-    if wandb is not None:
-        wandb.finish()
-    return {'loss': scores["val_student_loss"], 'status': STATUS_OK}
+
+    return {'loss': scores["val_student_loss"][0], 'status': STATUS_OK}
 
 
 def VINCENT_fit(config_g, teacher_g, x_with_h_g, y_train_g, x_with_h_val_g, y_val_g, x_with_h_test_g, y_test_g):
-    global x_with_h, y_train, x_with_h_val, y_val, x_with_h_test, y_test, config, best_model, best_score, teacher
+
     x_with_h = x_with_h_g
     y_train = y_train_g
     x_with_h_val = x_with_h_val_g
@@ -185,6 +148,14 @@ def VINCENT_fit(config_g, teacher_g, x_with_h_g, y_train_g, x_with_h_val_g, y_va
 
     trials = Trials()
     optimizable_variable = {
+        "config": config,
+        "teacher": teacher,
+        "y_val": y_val,
+        "y_train": y_train,
+        "y_test": y_test,
+        "x_with_h": x_with_h,
+        "x_with_h_val": x_with_h_val,
+        "x_with_h_test": x_with_h_test,
         "kernel": hp.choice("kernel", np.arange(2, 3 + 1)),
         "batch": hp.choice("batch", [64, 128, 256, 512]), #, 512
         'dropout1': hp.uniform("dropout1", 0, 1),

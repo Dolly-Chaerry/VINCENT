@@ -136,11 +136,11 @@ def main():
             else:
                 dashboard = []
                 wandb = None
-            teacher, history = vit_fit(config, x_train, y_train, x_val, y_val, dashboard)
-            scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
-                                                    config, wandb)
-            print(scores)
-            cr_teacher = classification_report(y_test, res_test)
+            teacher, history, y_pred = vit_fit(config, x_train, y_train, x_val, y_val, dashboard)
+            # scores, res_test = check_score_and_save(history, teacher, x_train, y_train, x_val, y_val, x_test, y_test,
+            #                                         config, wandb)
+            # print(scores)
+            cr_teacher = classification_report(y_val, y_pred)
             print(cr_teacher)
             #sys.exit()
             
@@ -181,7 +181,7 @@ def main():
        
         np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TRAIN.npz", patches=im)
         np.savez_compressed(config[config["SETTINGS"]["Dataset"]]["OutputDir"] + "ATT_TEST.npz", patches=im_test)
-        sys.exit()
+
 
     else:
         im, nat1 = create_heatmap_CNN(teacher, x_train, 1)
